@@ -108,15 +108,17 @@ let rec to_term ctx = function
     let lazy apply = apply in
     app2 ctx apply fn args
   | Conjunction (l,r) ->
-    let lazy conjunction = conjunction in
+    (*let lazy conjunction = conjunction in
     let l = to_term ctx l in
     let r = to_term ctx r in
-    app2 ctx conjunction l r
+    app2 ctx conjunction l r*)
+    to_term ctx (App (None, (Lazy.force conjunction), [l; r]))
   | Disjunction (l,r) ->
-    let lazy disjunction = disjunction in
+    (*let lazy disjunction = disjunction in
     let l = to_term ctx l in
     let r = to_term ctx r in
-    app2 ctx disjunction l r
+    app2 ctx disjunction l r*)
+    to_term ctx (App (None, (Lazy.force disjunction), [l; r]))
   | Atom a -> atom ctx a
 
 let eval ctx =
@@ -135,12 +137,14 @@ let eval ctx =
     let pred = Raw.Predicate.pred fn in
     Raw.Query.open_query ~flags pred Raw.Term.Array.empty
   | Conjunction (l,r) ->
-    let lazy conjunction = conjunction in
-    let conjunction = Raw.Predicate.pred conjunction in
+    (*let lazy conjunction = conjunction in
+    let conjunction = Raw.Predicate.pred conjunction in*)
+    let conjunction = Raw.Predicate.pred (Lazy.force conjunction) in
     Raw.Query.open_query ~flags conjunction (array_of_list ctx [to_term ctx l; to_term ctx r])
   | Disjunction (l,r) ->
-    let lazy disjunction = disjunction in
-    let disjunction = Raw.Predicate.pred disjunction in
+    (*let lazy disjunction = disjunction in
+    let disjunction = Raw.Predicate.pred disjunction in*)
+    let disjunction = Raw.Predicate.pred (Lazy.force disjunction) in
     Raw.Query.open_query ~flags disjunction (array_of_list ctx [to_term ctx l; to_term ctx r])
 
 let initialise () = Raw.initialise ()

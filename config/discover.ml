@@ -29,19 +29,37 @@ let write_flags file list_of_str =
   let data = String.concat list_of_str ~sep:" " in
   Out_channel.write_all file ~data
 
+let swi_inc_dir, swi_lib_dir =
+  let ic, oc = Unix.open_process "swipl --dump-runtime-variables" in
+  let re1 = Str.regexp {|^PLBASE=\"\(.+\)\"|} in
+  let re2 = Str.regexp {|^PLLIBDIR=\"\(.+\)\"|} in
+  let d1, d2 = ref None, ref None in
+  ( try 
+    while true do 
+      let s = Stdlib.input_line ic in
+      if Str.string_match re1 s 0 then
+        d1 := Some ("-I" ^ Str.matched_group 1 s ^ "/include")
+      else if Str.string_match re2 s 0 then
+        d2 := Some ("-L" ^ Str.matched_group 1 s)
+    done
+  with End_of_file -> () );
+  let _ = Unix.close_process (ic, oc) in
+  !d1, !d2
+
 let () =
   C.main ~name:"swipl" (fun c ->
     let default : C.Pkg_config.package_conf =
-      { libs   = ["-lswipl"; "-lffi"]
+      { libs   = ["-lswipl"; "-lffi";
+                  (match swi_lib_dir with Some d -> d | None -> "-I/usr/lib") ]
       ; cflags = ["-O2"; "-Wall"; "-Wextra"; "-Wno-unused-parameter"; "-pthread";
-                  "-I/usr/lib/swi-prolog/include";
+                  (match swi_inc_dir with Some d -> d | None -> "-I/usr/lib/swi-prolog/include");
                   "-I/usr/lib/libffi-3.2.1/include"]
       }
     in
     let default_ffi : C.Pkg_config.package_conf =
       { libs   = ["-lffi"] ;
         cflags = ["-O2"; "-Wall"; "-Wextra"; "-Wno-unused-parameter";
-                  "-I/usr/lib/swi-prolog/include";
+                  (match swi_inc_dir with Some d -> d | None -> "-I/usr/lib/swi-prolog/include");
                   "-I/usr/include/x86_64-linux-gnu"; (* default ubuntu *)
                   "-I/usr/include"] (* default ubuntu *)
       }
