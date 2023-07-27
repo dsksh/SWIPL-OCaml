@@ -17,8 +17,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 *)
 
-let consult file =
+(*let consult file =
   Swipl.(with_ctx @@ fun ctx -> call ctx Syntax.(app ("consult" /@ 1) [! file]))
+*)
 
 type t =
   | Lam of string * t
@@ -84,9 +85,30 @@ let typecheck term =
     else None
   )
 
+let () = Swipl.initialise ()
+
+let () = Swipl.load_source {|
+typeof(Gamma, Term, Type) :-
+        atom(Term),
+        member(type(Term, Tvar), Gamma),
+        !,
+        unify_with_occurs_check(Type, Tvar).
+
+typeof(Gamma, lam(A,B), Type) :-
+        atom(A),
+        typeof([type(A, TvarA)|Gamma], B, TvarB),
+        unify_with_occurs_check(Type, fun(TvarA, TvarB)).
+
+typeof(Gamma, app(A,B), Type) :-
+        typeof(Gamma, A, TvarA),
+        unify_with_occurs_check(TvarA, fun(TvarIn, TvarOut)),
+        typeof(Gamma, B, TvarIn),
+        unify_with_occurs_check(Type, TvarOut).
+|}
+
 let () =
-  let () = Swipl.initialise () in
-  consult "./type_checker.pl";
+  (*let () = Swipl.initialise () in
+  consult "./type_checker.pl";*)
   let term = Lam("x", Lam("y", App(Var "x", App(Var "y", Var "x")))) in
   match typecheck term with
   | None -> print_endline @@ "Term does not type check"

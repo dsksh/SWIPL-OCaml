@@ -58,6 +58,11 @@ let encode_string ctx str =
   assert(Raw.Term.put_string_chars t str);
   t
 
+let encode_integer ctx v =
+  let t = create_term ctx in
+  assert(Raw.Term.put_integer t v);
+  t
+
 let encode_list ctx ls =
   let rec loop result = function
     | [] -> assert (Raw.Term.put_nil result); result
@@ -250,11 +255,17 @@ let extract_atom ctx term = Raw.Term.get_atom (to_term ctx term) |> Option.get
 let show_atom atom = Raw.Atom.chars atom
 let pp_atom fmt atom = Format.pp_print_string fmt (show_atom atom)
 let extract_bool ctx term = Raw.Term.get_bool (to_term ctx term) |> Option.get
-let extract_int ctx term = Raw.Term.get_integer (to_term ctx term) |> Option.get
+let get_int   ctx term = Raw.Term.get_integer (to_term ctx term)
+let get_long  ctx term = Raw.Term.get_long    (to_term ctx term)
+let get_int64 ctx term = Raw.Term.get_int64   (to_term ctx term)
+let extract_int   ctx term = get_int   ctx term |> Option.get
+let extract_long  ctx term = get_long  ctx term |> Option.get
+let extract_int64 ctx term = get_int64 ctx term |> Option.get
 let extract_float ctx term = Raw.Term.get_float (to_term ctx term) |> Option.get
 let extract_string ctx term = Raw.Term.get_string_chars (to_term ctx term) |> Option.get
+let extract_name_arity ctx term = Raw.Term.get_name_arity (to_term ctx term) |> Option.get
 let extract_functor ctx term =
-  let (name, arity) = Raw.Term.get_name_arity (to_term ctx term) |> Option.get in
+  let (name, arity) = extract_name_arity ctx term in
   let rec loop acc ind =
     if ind < arity
     then
@@ -272,6 +283,7 @@ let typeof = function
   | Disjunction (_, _) -> `Term
 
 let encode_list ctx args = of_term (List.map (to_term ctx) args |> encode_list ctx)
+let encode_integer ctx v = of_term (encode_integer ctx v)
 let encode_string ctx str = of_term (encode_string ctx str)
 
 let load_source txt =

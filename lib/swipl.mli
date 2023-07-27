@@ -181,6 +181,10 @@ val encode_list: ctx -> t list -> t
 (** [encode_list ctx ls] returns a prolog term representing the list
     [ls]. *)
 
+val encode_integer: ctx -> int -> t
+(** [encode_int ctx v] returns a prolog term representing the integer 
+    value [v]. *)
+
 val encode_string: ctx -> string -> t
 (** [encode_string ctx str] returns a prolog term representing the string
     [str]. *)
@@ -210,12 +214,13 @@ val extract_bool: ctx -> t -> bool
     that is not a bool. If in doubt, check the type of the term with
     {!typeof} first.  *)
 
-val extract_int: ctx -> t -> int
-(** [extract_int ctx t] extracts an int from [t].
+val get_int: ctx -> t -> int option
+val get_long: ctx -> t -> Signed.long option
+val get_int64: ctx -> t -> int64 option
 
-    {b Note}: It is undefined behaviour to call this function on a term
-    that is not an int. If in doubt, check the type of the term with
-    {!typeof} first.  *)
+val extract_int: ctx -> t -> int
+val extract_long: ctx -> t -> Signed.long
+val extract_int64: ctx -> t -> int64
 
 val extract_float: ctx -> t -> float
 (** [extract_float ctx t] extracts a float from [t].
@@ -231,6 +236,7 @@ val extract_string: ctx -> t -> string
     that is not a string. If in doubt, check the type of the term with
     {!typeof} first.  *)
 
+val extract_name_arity: ctx -> t -> (atom * int)
 
 val extract_functor: ctx -> t -> (atom * t list)
 (** [extract_int ctx t] extracts a compound term or atom from [t].

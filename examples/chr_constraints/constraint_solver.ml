@@ -59,11 +59,30 @@ let solve_constraints ls =
     let result = decode ctx result in
     result
   )
-  
+
+let () = Swipl.initialise ()
+
+let () = Swipl.load_source "
+:- use_module(library(chr)).
+
+:- chr_constraint salt/0, water/0, salt_water/0.
+
+salt, water <=> salt_water.
+
+reducesTo_(Goal, C) :-
+        writeln(Goal),
+        call(Goal),
+        call(user:'$enumerate_constraints'(C)).
+reducesTo(Goal, Constraints) :-
+        findall(Constraint, reducesTo_(Goal, Constraint), Constraints).
+        %reducesTo_(Goal, Constraints).
+
+hello :- writeln('hello world').
+"
+
 let () =
-  let () = Swipl.initialise () in
-  consult "./constraints.pl";
+  (*consult "./constraints.pl";*)
   let terms = [Salt; Water; Salt; Salt; Salt; Salt; Water; Water] in
   let term = solve_constraints terms in
   print_endline (show_store term);
-
+  ()
